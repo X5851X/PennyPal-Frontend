@@ -17,17 +17,17 @@ import {
 import { BarChart, LineChart, PieChart, WeeklyLineChart } from '../../components/chart/chart';
 import Layout from '../../components/layout';
 import { authService } from '../../services/auth';
-import './dashboard.css';
+import './transaction.css';
 
-const Dashboard = () => {
+const Transaction = () => {
 
   return (
     <Layout>
-      <div className="dashboard">
-        <h1>Dashboard</h1>
+      <div className="transaction">
+        <h1>Transaction</h1>
       </div>
     </Layout>
   );
 }
 
-export default Dashboard;
+export default Transaction;

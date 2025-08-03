@@ -1,9 +1,12 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/home/home';
-import Dashboard from './pages/dashboard/dashboard';
 import OAuthRedirect from './components/auth/OAuthRedirect';
 import { authService } from './services/auth';
+
+import Dashboard from './pages/dashboard/dashboard';
+import Analytics from './pages/analytics/analytic'; 
+import Transaction from './pages/transactions/transaction'; 
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -41,7 +44,7 @@ function App() {
           } 
         />
         
-        {/* OAuth Redirect Route - ADD THIS ROUTE */}
+        {/* OAuth Redirect Route */}
         <Route path="/oauth-redirect" element={<OAuthRedirect />} />
         
         {/* Protected Routes - perlu login */}
@@ -53,18 +56,24 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        
-        {/* Tambahkan protected routes lainnya di sini */}
-        {/* 
+
         <Route 
-          path="/profile" 
+          path="/transaction" 
           element={
             <ProtectedRoute>
-              <Profile />
+              <Transaction />
             </ProtectedRoute>
           } 
         />
-        */}
+
+        <Route 
+          path="/analytic" 
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Catch all route - redirect ke home */}
         <Route path="*" element={<Navigate to="/" replace />} />
