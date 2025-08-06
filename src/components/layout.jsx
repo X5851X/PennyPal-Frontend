@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   WalletIcon,
@@ -14,13 +14,17 @@ import {
 } from 'lucide-react';
 import { authService } from '../services/auth';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, onSearch, searchPlaceholder = "Search transactions, categories..." }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Handle window resize
   useEffect(() => {
@@ -69,13 +73,13 @@ const Layout = ({ children }) => {
       name: 'Transactions',
       href: '/transaction',
       icon: CreditCardIcon,
-      current: location.pathname === '/transactions'
+      current: location.pathname === '/transaction'
     },
     {
       name: 'Analytics',
       href: '/analytic',
       icon: BarChart3Icon,
-      current: location.pathname === '/analytics'
+      current: location.pathname === '/analytic'
     }
   ];
 
@@ -92,11 +96,78 @@ const Layout = ({ children }) => {
       if (isProfileDropdownOpen && !event.target.closest('.profile-dropdown')) {
         setIsProfileDropdownOpen(false);
       }
+      if (showSearchResults && !event.target.closest('.search-container')) {
+        setShowSearchResults(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isProfileDropdownOpen]);
+  }, [isProfileDropdownOpen, showSearchResults]);
+
+  // Search functionality
+  const handleSearchChange = useCallback((e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.trim()) {
+      setIsSearching(true);
+      setShowSearchResults(true);
+      
+      // Call parent component's search function if provided
+      if (onSearch) {
+        onSearch(query);
+      }
+      
+      // Simulate search results for demo
+      setTimeout(() => {
+        setSearchResults([]);
+        setIsSearching(false);
+      }, 300);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      setIsSearching(false);
+      
+      // Clear search in parent component
+      if (onSearch) {
+        onSearch('');
+      }
+    }
+  }, [onSearch]);
+
+  const handleSearchResultClick = useCallback((result) => {
+    if (result.type === 'transaction') {
+      navigate('/transaction');
+    } else if (result.type === 'category') {
+      navigate('/transaction');
+    } else if (result.type === 'page') {
+      navigate('/analytic');
+    }
+    setShowSearchResults(false);
+    setSearchQuery('');
+  }, [navigate]);
+
+  const formatCurrency = useCallback((amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(Math.abs(amount));
+  }, []);
+
+  const getResultIcon = (type) => {
+    switch (type) {
+      case 'transaction':
+        return CreditCardIcon;
+      case 'category':
+        return BarChart3Icon;
+      case 'page':
+        return HomeIcon;
+      default:
+        return SearchIcon;
+    }
+  };
 
   const styles = {
     container: {
@@ -129,7 +200,9 @@ const Layout = ({ children }) => {
       zIndex: 40,
       overflowY: 'auto',
       boxShadow: '4px 0 25px rgba(0, 0, 0, 0.15)',
-      transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'
+      transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+      display: 'flex',
+      flexDirection: 'column'
     },
     
     sidebarHeader: {
@@ -137,7 +210,8 @@ const Layout = ({ children }) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '1.5rem',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      flexShrink: 0
     },
     
     logo: {
@@ -176,7 +250,8 @@ const Layout = ({ children }) => {
     
     nav: {
       flex: 1,
-      padding: '1rem 0'
+      padding: '1rem 0',
+      minHeight: 0
     },
     
     navSection: {
@@ -226,7 +301,9 @@ const Layout = ({ children }) => {
     
     sidebarFooter: {
       padding: '1rem 1.5rem',
-      borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+      flexShrink: 0,
+      marginTop: 'auto'
     },
     
     userCard: {
@@ -344,6 +421,88 @@ const Layout = ({ children }) => {
       background: '#f8fafc',
       transition: 'all 0.2s ease',
       outline: 'none'
+    },
+    
+    searchResults: {
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      right: 0,
+      background: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.5rem',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+      zIndex: 50,
+      marginTop: '0.25rem',
+      maxHeight: '20rem',
+      overflowY: 'auto',
+      opacity: showSearchResults ? 1 : 0,
+      visibility: showSearchResults ? 'visible' : 'hidden',
+      transform: `translateY(${showSearchResults ? '0' : '-0.5rem'})`,
+      transition: 'all 0.2s ease'
+    },
+    
+    searchResultsHeader: {
+      padding: '0.75rem 1rem',
+      borderBottom: '1px solid #e2e8f0',
+      fontSize: '0.75rem',
+      fontWeight: 600,
+      color: '#64748b',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em'
+    },
+    
+    searchResultItem: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      padding: '0.75rem 1rem',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      borderLeft: '3px solid transparent'
+    },
+    
+    searchResultIcon: {
+      width: '1rem',
+      height: '1rem',
+      color: '#64748b',
+      flexShrink: 0
+    },
+    
+    searchResultContent: {
+      flex: 1,
+      minWidth: 0
+    },
+    
+    searchResultTitle: {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      color: '#1e293b',
+      marginBottom: '0.125rem'
+    },
+    
+    searchResultDescription: {
+      fontSize: '0.75rem',
+      color: '#64748b'
+    },
+    
+    searchResultAmount: {
+      fontSize: '0.875rem',
+      fontWeight: 600
+    },
+    
+    loadingResults: {
+      padding: '1rem',
+      textAlign: 'center',
+      fontSize: '0.875rem',
+      color: '#64748b'
+    },
+    
+    noResults: {
+      padding: '1rem',
+      textAlign: 'center',
+      fontSize: '0.875rem',
+      color: '#64748b'
     },
     
     headerRight: {
@@ -528,6 +687,42 @@ const Layout = ({ children }) => {
     );
   };
 
+  // Search result item component
+  const SearchResultItem = ({ result }) => {
+    const Icon = getResultIcon(result.type);
+    
+    return (
+      <div
+        style={styles.searchResultItem}
+        onClick={() => handleSearchResultClick(result)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#f8fafc';
+          e.currentTarget.style.borderLeftColor = '#16a34a';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.borderLeftColor = 'transparent';
+        }}
+      >
+        <Icon style={styles.searchResultIcon} />
+        <div style={styles.searchResultContent}>
+          <div style={styles.searchResultTitle}>{result.title}</div>
+          <div style={styles.searchResultDescription}>{result.description}</div>
+        </div>
+        {result.amount && (
+          <div 
+            style={{
+              ...styles.searchResultAmount,
+              color: result.amount > 0 ? '#16a34a' : '#ef4444'
+            }}
+          >
+            {formatCurrency(result.amount)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={styles.container}>
       {/* Sidebar Overlay */}
@@ -577,7 +772,7 @@ const Layout = ({ children }) => {
             </div>
             <div style={styles.userInfo}>
               <div style={styles.userName}>{user?.username || user?.name || 'User'}</div>
-              <div style={styles.userEmail}>{user?.email || 'user@example.com'}</div>
+              <div style={styles.userEmail}>{user?.email || ''}</div>
             </div>
           </div>
         </div>
@@ -605,11 +800,13 @@ const Layout = ({ children }) => {
                 <MenuIcon style={{ width: '1.5rem', height: '1.5rem' }} />
               </button>
               
-              <div style={styles.searchContainer}>
+              <div style={styles.searchContainer} className="search-container">
                 <SearchIcon style={styles.searchIcon} />
                 <input
                   type="text"
-                  placeholder="Search transactions, categories..."
+                  placeholder={searchPlaceholder}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                   style={styles.searchInput}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#16a34a';
@@ -622,6 +819,28 @@ const Layout = ({ children }) => {
                     e.target.style.background = '#f8fafc';
                   }}
                 />
+                
+                {/* Search Results */}
+                <div style={styles.searchResults}>
+                  {isSearching ? (
+                    <div style={styles.loadingResults}>
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      <div style={styles.searchResultsHeader}>
+                        Search Results ({searchResults.length})
+                      </div>
+                      {searchResults.map((result, index) => (
+                        <SearchResultItem key={index} result={result} />
+                      ))}
+                    </>
+                  ) : searchQuery.trim() && showSearchResults ? (
+                    <div style={styles.noResults}>
+                      No results found for "{searchQuery}"
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -653,7 +872,7 @@ const Layout = ({ children }) => {
                 <div style={styles.dropdownMenu}>
                   <div style={styles.dropdownHeader}>
                     <div style={styles.dropdownUserName}>{user?.username || user?.name || 'User'}</div>
-                    <div style={styles.dropdownUserEmail}>{user?.email || 'user@example.com'}</div>
+                    <div style={styles.dropdownUserEmail}>{user?.email || ''}</div>
                   </div>
                   
                   <div style={styles.dropdownDivider} />

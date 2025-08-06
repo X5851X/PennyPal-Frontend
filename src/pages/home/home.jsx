@@ -39,7 +39,7 @@ const Home = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('pennypal_token') || localStorage.getItem('jwt_token');
+    const token = localStorage.getItem('pennypal_token');
     if (token) {
       navigate('/dashboard');
     }
@@ -49,7 +49,6 @@ const Home = () => {
   const handleSignIn = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       const data = await authService.signin(signInData.email, signInData.password);
       

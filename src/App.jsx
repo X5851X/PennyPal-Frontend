@@ -3,10 +3,12 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/home/home';
 import OAuthRedirect from './components/auth/OAuthRedirect';
 import { authService } from './services/auth';
+import AIAssistant from './components/AIAssistant';
 
 import Dashboard from './pages/dashboard/dashboard';
 import Analytics from './pages/analytics/analytic'; 
-import Transaction from './pages/transactions/transaction'; 
+import Transaction from './pages/transactions/transaction';
+import Profile from './pages/profile/profile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -16,7 +18,12 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
   
-  return children;
+  return (
+    <>
+      {children}
+      <AIAssistant />
+    </>
+  );
 };
 
 // Public Route Component (redirect to dashboard jika sudah login)
@@ -71,6 +78,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Analytics />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           } 
         />
