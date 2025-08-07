@@ -363,7 +363,8 @@ export const authService = {
   googleAuth: () => {
     console.log('Redirecting to Google OAuth');
     const backendUrl = import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
-    window.location.href = `${backendUrl}/auth/google`;
+    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+    window.location.href = `${backendUrl}/auth/google?redirect=${encodeURIComponent(frontendUrl + '/oauth-redirect')}`;
   },
 
   // Handle OAuth Callback
