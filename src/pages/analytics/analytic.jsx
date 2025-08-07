@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Layout from '../../components/layout';
 import { authService } from '../../services/auth';
 import { transactionService } from '../../services/transaction';
-import SpendingInsights from '../../components/SpendingInsights';
-import '../../components/SpendingInsights.css';
+import SpendingInsights from '../../components/spending/SpendingInsights';
+import '../../components/spending/SpendingInsights.css';
 import './analytic.css';
 
 const Analytics = () => {
@@ -87,8 +87,8 @@ const Analytics = () => {
       if (fromCurrency === toCurrency) return amount;
       
       const rates = {
-        USD: 1, IDR: 15800, KRW: 1350, EUR: 0.85, JPY: 110,
-        SGD: 1.35, MYR: 4.2, AUD: 1.4, GBP: 0.75, CHF: 0.92, CAD: 1.25
+        USD: 1, IDR: 15000, KRW: 1300, EUR: 0.92, JPY: 150,
+        SGD: 1.34, MYR: 4.7, AUD: 1.5, GBP: 0.79, CHF: 0.88, CAD: 1.36
       };
       
       if (!rates[fromCurrency] || !rates[toCurrency]) return amount;
@@ -207,6 +207,34 @@ const Analytics = () => {
     })).sort((a, b) => b.totalAmount - a.totalAmount);
   }, [filteredTransactions]);
 
+  const topExpenseCategory = useMemo(() => {
+    const expenseCategories = {};
+    
+    filteredTransactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        const category = t.category || 'Other';
+        if (!expenseCategories[category]) {
+          expenseCategories[category] = { totalAmount: 0, count: 0 };
+        }
+        expenseCategories[category].totalAmount += Math.abs(t.convertedAmount);
+        expenseCategories[category].count += 1;
+      });
+
+    const totalExpenseAmount = Object.values(expenseCategories).reduce((sum, cat) => sum + cat.totalAmount, 0);
+    
+    const sortedCategories = Object.entries(expenseCategories)
+      .map(([category, data]) => ({
+        category,
+        totalAmount: data.totalAmount,
+        count: data.count,
+        percentage: totalExpenseAmount > 0 ? (data.totalAmount / totalExpenseAmount) * 100 : 0
+      }))
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+    
+    return sortedCategories[0] || null;
+  }, [filteredTransactions]);
+
   // Effects
   useEffect(() => {
     fetchUserPreferences();
@@ -216,16 +244,16 @@ const Analytics = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  const formatCurrency = useCallback((amount, currency = baseCurrency) => {
+  const formatCurrency = useCallback((amount) => {
     const currencySymbols = {
       IDR: 'Rp', USD: '$', EUR: '€', JPY: '¥', SGD: 'S$', MYR: 'RM',
       AUD: 'A$', GBP: '£', CHF: 'CHF', CAD: 'C$', KRW: '₩'
     };
     
-    const symbol = currencySymbols[currency] || currency;
+    const symbol = currencySymbols[baseCurrency] || baseCurrency;
     const numAmount = parseFloat(amount) || 0;
     
-    if (['IDR', 'KRW', 'JPY'].includes(currency)) {
+    if (['IDR', 'KRW', 'JPY'].includes(baseCurrency)) {
       return `${symbol} ${Math.round(numAmount).toLocaleString()}`;
     }
     return `${symbol} ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -579,15 +607,15 @@ const Analytics = () => {
                         </div>
                       </div>
 
-                      {categoryData.length > 0 && (
+                      {topExpenseCategory && (
                         <div className="insight-item">
                           <span className="insight-icon">🎯</span>
                           <div className="insight-content">
-                            <h5>Top Category</h5>
+                            <h5>Top Spending Category</h5>
                             <p>
-                              Your highest spending category is <strong>{categoryData[0]?.category || 'N/A'}</strong> 
-                              with {formatCurrency(categoryData[0]?.totalAmount || 0)}, 
-                              making up {categoryData[0]?.percentage.toFixed(1) || 0}% of total spending.
+                              Your highest spending category is <strong>{topExpenseCategory.category}</strong> 
+                              with {formatCurrency(topExpenseCategory.totalAmount)}, 
+                              making up {topExpenseCategory.percentage.toFixed(1)}% of total expenses.
                             </p>
                           </div>
                         </div>

@@ -61,10 +61,11 @@ const Dashboard = () => {
 
   // Get API base URL
   const getApiUrl = useCallback(() => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:3000';
+    // Use direct endpoints in development (proxy handles routing)
+    if (import.meta.env.DEV) {
+      return '';
     }
-    return process.env.REACT_APP_API_URL || 'https://your-backend-url.com';
+    return import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
   }, []);
 
   // Check authentication

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
 const API_URL = `${API_BASE_URL}/ai`;
 
 const eliceAPI = axios.create({

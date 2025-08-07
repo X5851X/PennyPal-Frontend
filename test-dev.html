@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Development Connection</title>
+</head>
+<body>
+    <h1>Test Development Connection</h1>
+    <button onclick="testProxy()">Test Proxy</button>
+    <button onclick="testDirect()">Test Direct</button>
+    <div id="result"></div>
+
+    <script>
+        async function testProxy() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing proxy...';
+            
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `<p style="color: green;">✅ Proxy connection successful!</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Proxy connection failed: ${error.message}</p>`;
+            }
+        }
+
+        async function testDirect() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing direct connection...';
+            
+            try {
+                const response = await fetch('https://pennypal-backend.ddns.net/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `<p style="color: green;">✅ Direct connection successful!</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Direct connection failed: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

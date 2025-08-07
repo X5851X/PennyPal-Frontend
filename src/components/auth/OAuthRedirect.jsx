@@ -36,7 +36,7 @@ const OAuthRedirect = () => {
         // Get user data using the token
         try {
           // Make a request to get user data
-          const response = await fetch(`${import.meta.env.VITE_BACKEND || 'http://localhost:3000'}/auth/me`, {
+          const response = await fetch(`${import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net')}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

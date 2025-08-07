@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/home/home';
 import OAuthRedirect from './components/auth/OAuthRedirect';
 import { authService } from './services/auth';
-import AIAssistant from './components/AIAssistant';
+import AIAssistant from './components/chatbot/AIAssistant';
 
 import Dashboard from './pages/dashboard/dashboard';
 import Analytics from './pages/analytics/analytic'; 

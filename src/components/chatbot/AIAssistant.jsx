@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { transactionService } from '../services/transaction';
+import { transactionService } from '../../services/transaction';
 import './AIAssistant.css';
 
 const AIAssistant = ({ userContext = '', onCategorySelect = null }) => {
@@ -66,19 +66,7 @@ const AIAssistant = ({ userContext = '', onCategorySelect = null }) => {
     }
   };
 
-  const quickQuestions = [
-    { text: "💰 How can I save more money?", icon: "💰" },
-    { text: "📊 What's a good budgeting strategy?", icon: "📊" },
-    { text: "🍽️ How much should I spend on food?", icon: "🍽️" },
-    { text: "✂️ Tips for reducing expenses?", icon: "✂️" },
-    { text: "🏦 Emergency fund advice?", icon: "🏦" },
-    { text: "💳 How to manage debt?", icon: "💳" }
-  ];
 
-  const handleQuickQuestion = async (question) => {
-    setMessage(question.text);
-    await handleSendMessage();
-  };
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -145,23 +133,7 @@ const AIAssistant = ({ userContext = '', onCategorySelect = null }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Questions */}
-          <div className="ai-quick-questions">
-            <div className="ai-quick-title">💡 Quick questions:</div>
-            <div className="ai-quick-grid">
-              {quickQuestions.slice(0, 4).map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleQuickQuestion(question)}
-                  className="ai-quick-btn"
-                  disabled={loading}
-                >
-                  <span className="ai-quick-icon">{question.icon}</span>
-                  <span className="ai-quick-text">{question.text.replace(/^[^\s]+\s/, '')}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           {/* Input Area */}
           <div className="ai-input-container">

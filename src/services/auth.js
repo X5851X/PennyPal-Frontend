@@ -1,8 +1,16 @@
 import axios from 'axios';
 
 // Base URL configuration - Fixed for Vite
-const API_BASE_URL = import.meta.env.VITE_BACKEND || 'http://localhost:3000';
-const API_URL = `${API_BASE_URL}/auth`;
+const getApiBaseUrl = () => {
+  // Use direct endpoints in development (proxy handles routing)
+  if (import.meta.env.DEV) {
+    return '';
+  }
+  return import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const API_URL = '/auth'; // Always use proxy path in development
 
 // Create axios instance with default config
 const authAPI = axios.create({
@@ -102,6 +110,12 @@ authAPI.interceptors.response.use(
 // Enhanced error handling function
 const handleAuthError = (error, operation = 'operation') => {
   console.error(`${operation} error:`, error);
+  console.error('Error details:', {
+    status: error.response?.status,
+    data: error.response?.data,
+    message: error.message,
+    code: error.code
+  });
   
   if (error.response) {
     // Server responded with error status
@@ -121,7 +135,8 @@ const handleAuthError = (error, operation = 'operation') => {
     } else if (status === 422) {
       return { message: data?.message || 'Validation failed' };
     } else if (status >= 500) {
-      return { message: 'Server error. Please try again later.' };
+      const serverMsg = data?.message || data?.error || 'Server error';
+      return { message: `Server error: ${serverMsg}. Please try again later.` };
     } else {
       return { message: data?.message || `Request failed with status ${status}` };
     }

@@ -1,7 +1,15 @@
 import axios from 'axios';
 import eliceService from './elice.js';
 
-const API_BASE = window.REACT_APP_API_URL || 'http://localhost:3000';
+const getApiBase = () => {
+  // Use direct endpoints in development (proxy handles routing)
+  if (import.meta.env.DEV) {
+    return '';
+  }
+  return import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
+};
+
+const API_BASE = getApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,

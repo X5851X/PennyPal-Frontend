@@ -128,24 +128,29 @@ const Transaction = () => {
     return new Date().toISOString().split('T')[0];
   };
 
-  const detectCategoryFromOCR = (text, storeName) => {
-    const lowerText = (text + ' ' + storeName).toLowerCase();
+  const detectCategoryFromOCR = (text, storeName, items = []) => {
+    const lowerText = (text + ' ' + storeName + ' ' + items.join(' ')).toLowerCase();
     
     const categories = {
-      'Food & Dining': ['restaurant', 'cafe', 'warung', 'resto', 'food', 'makanan', 'pizza', 'burger', 'nasi', 'ayam', 'bakso', 'mie', 'coffee', 'kopi'],
-      'Groceries': ['supermarket', 'minimarket', 'indomaret', 'alfamart', 'hypermart', 'carrefour', 'giant', 'sayur', 'buah', 'beras', 'telur', 'susu'],
-      'Transportation': ['grab', 'gojek', 'taxi', 'ojek', 'bus', 'kereta', 'toll', 'parking', 'parkir', 'bensin', 'pertamina', 'shell'],
-      'Healthcare': ['pharmacy', 'apotek', 'kimia farma', 'guardian', 'watson', 'medicine', 'obat', 'vitamin', 'hospital', 'klinik'],
-      'Shopping': ['mall', 'store', 'shop', 'toko', 'fashion', 'clothing', 'elektronik']
+      'Food & Dining': ['restaurant', 'cafe', 'warung', 'resto', 'food', 'makanan', 'pizza', 'burger', 'nasi', 'ayam', 'bakso', 'mie', 'coffee', 'kopi', 'makan', 'drink', 'beverage', 'snack', 'meal', 'lunch', 'dinner', 'breakfast'],
+      'Groceries': ['supermarket', 'minimarket', 'indomaret', 'alfamart', 'hypermart', 'carrefour', 'giant', 'sayur', 'buah', 'beras', 'telur', 'susu', 'grocery', 'fresh', 'produce', 'dairy', 'meat', 'vegetable', 'fruit'],
+      'Transportation': ['grab', 'gojek', 'taxi', 'ojek', 'bus', 'kereta', 'toll', 'parking', 'parkir', 'bensin', 'pertamina', 'shell', 'fuel', 'gas', 'transport', 'travel', 'ride', 'uber'],
+      'Healthcare': ['pharmacy', 'apotek', 'kimia farma', 'guardian', 'watson', 'medicine', 'obat', 'vitamin', 'hospital', 'klinik', 'health', 'medical', 'doctor', 'clinic'],
+      'Shopping': ['mall', 'store', 'shop', 'toko', 'fashion', 'clothing', 'elektronik', 'electronic', 'gadget', 'apparel', 'shoes', 'bag', 'accessories'],
+      'Bills & Utilities': ['listrik', 'air', 'internet', 'telepon', 'pln', 'pdam', 'wifi', 'electricity', 'water', 'phone', 'utility', 'bill'],
+      'Entertainment': ['cinema', 'movie', 'game', 'music', 'concert', 'theater', 'entertainment', 'fun', 'leisure']
     };
     
+    let bestMatch = { category: 'Other', score: 0 };
+    
     for (const [category, keywords] of Object.entries(categories)) {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
-        return category;
+      const matches = keywords.filter(keyword => lowerText.includes(keyword)).length;
+      if (matches > bestMatch.score) {
+        bestMatch = { category, score: matches };
       }
     }
     
-    return 'Other';
+    return bestMatch.category;
   };
 
   const generateTagsFromOCR = (text, storeName, category) => {
@@ -429,19 +434,27 @@ const Transaction = () => {
       const result = await transactionService.scanReceipt(imageData, filename);
       if (result.success && result.data) {
         setOcrResult(result.data);
-        const receipt = result.data.receipt;
-        const detectedCategory = detectCategoryFromOCR(result.data.text, receipt?.storeName);
-        const generatedTags = generateTagsFromOCR(result.data.text, receipt?.storeName, detectedCategory);
+        const receipt = result.data.receipt || {};
+        const extractedText = result.data.text || '';
+        const items = result.data.items || [];
+        
+        // Enhanced data extraction
+        const storeName = receipt.storeName || receipt.merchant || 'Store';
+        const totalAmount = receipt.total || receipt.amount || receipt.grandTotal || 0;
+        const receiptDate = receipt.date || receipt.transactionDate || new Date().toISOString().split('T')[0];
+        
+        const detectedCategory = detectCategoryFromOCR(extractedText, storeName, items);
+        const generatedTags = generateTagsFromOCR(extractedText, storeName, detectedCategory);
         
         setAddFormData(prev => ({
           ...prev,
-          title: receipt?.storeName || 'Receipt Purchase',
-          amount: (receipt?.amount || receipt?.total || 0).toString(),
+          title: `${storeName} - Receipt`,
+          amount: totalAmount.toString(),
           category: detectedCategory,
-          description: `Receipt from ${receipt?.storeName || 'Store'} - ${receipt?.date || 'Unknown date'}`,
+          description: `Receipt from ${storeName}${items.length > 0 ? ` - Items: ${items.slice(0, 3).join(', ')}${items.length > 3 ? '...' : ''}` : ''}`,
           source: 'ocr',
           tags: generatedTags,
-          date: parseDateFromOCR(receipt?.date)
+          date: parseDateFromOCR(receiptDate)
         }));
       } else {
         setError(result.message || 'Failed to process receipt');
@@ -471,6 +484,9 @@ const Transaction = () => {
         await processOCRResult(event.target.result, file.name);
         setShowOCR(false);
         setShowAddForm(true);
+      };
+      reader.onerror = () => {
+        setError('Failed to read the image file');
       };
       reader.readAsDataURL(file);
     }
@@ -903,24 +919,35 @@ const Transaction = () => {
             <div className="receipt-details">
               <div className="detail-item">
                 <span className="detail-label">🏪 Store:</span>
-                <span className="detail-value">{ocrResult.receipt?.storeName || 'Unknown'}</span>
+                <span className="detail-value">{ocrResult.receipt?.storeName || ocrResult.receipt?.merchant || 'Unknown'}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">💰 Total:</span>
-                <span className="detail-value">{formatCurrency(ocrResult.receipt?.amount || ocrResult.receipt?.total || 0)}</span>
+                <span className="detail-value">{formatCurrency(ocrResult.receipt?.total || ocrResult.receipt?.amount || ocrResult.receipt?.grandTotal || 0)}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">📂 Category:</span>
-                <span className="detail-value">{detectCategoryFromOCR(ocrResult.text, ocrResult.receipt?.storeName)}</span>
+                <span className="detail-value">{detectCategoryFromOCR(ocrResult.text, ocrResult.receipt?.storeName || ocrResult.receipt?.merchant, ocrResult.items)}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">📅 Date:</span>
-                <span className="detail-value">{ocrResult.receipt?.date || 'Unknown'}</span>
+                <span className="detail-value">{ocrResult.receipt?.date || ocrResult.receipt?.transactionDate || 'Unknown'}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">🎯 Confidence:</span>
                 <span className="detail-value">{Math.round(ocrResult.confidence || 0)}%</span>
               </div>
+              {ocrResult.items && ocrResult.items.length > 0 && (
+                <div className="detail-item full-width">
+                  <span className="detail-label">🛍️ Items:</span>
+                  <div className="items-list">
+                    {ocrResult.items.slice(0, 5).map((item, index) => (
+                      <span key={index} className="item-tag">{item}</span>
+                    ))}
+                    {ocrResult.items.length > 5 && <span className="item-more">+{ocrResult.items.length - 5} more</span>}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
