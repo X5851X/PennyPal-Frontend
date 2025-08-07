@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test - PennyPal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffe7e7;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #e7ffe7;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 PennyPal OAuth Test</h1>
+        
+        <div class="info">
+            <h3>Current Configuration:</h3>
+            <p><strong>Frontend URL:</strong> https://core-pennypal.vercel.app</p>
+            <p><strong>Backend URL:</strong> https://pennypal-backend.ddns.net</p>
+            <p><strong>OAuth Redirect:</strong> https://core-pennypal.vercel.app/oauth-redirect</p>
+        </div>
+
+        <h3>🧪 Tests:</h3>
+        <button class="button" onclick="testBackendHealth()">Test Backend Health</button>
+        <button class="button" onclick="testGoogleOAuth()">Test Google OAuth URL</button>
+        <button class="button" onclick="startOAuth()">Start OAuth Flow</button>
+        <button class="button" onclick="checkCurrentURL()">Check Current URL</button>
+        <button class="button" onclick="clearStorage()">Clear Storage</button>
+
+        <div id="results"></div>
+
+        <h3>📋 Expected Google Console Settings:</h3>
+        <div class="info">
+            <p><strong>Authorized JavaScript origins:</strong></p>
+            <pre>https://core-pennypal.vercel.app
+https://pennypal-backend.ddns.net
+http://localhost:5173 (for development)</pre>
+            
+            <p><strong>Authorized redirect URIs:</strong></p>
+            <pre>https://pennypal-backend.ddns.net/auth/google/callback
+https://core-pennypal.vercel.app/oauth-redirect
+http://localhost:5173/oauth-redirect (for development)</pre>
+        </div>
+
+        <h3>🔧 Troubleshooting Steps:</h3>
+        <ol>
+            <li>Verify Google Console settings match above</li>
+            <li>Check backend server is running</li>
+            <li>Ensure CORS is properly configured</li>
+            <li>Check network connectivity</li>
+            <li>Verify environment variables</li>
+        </ol>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://pennypal-backend.ddns.net';
+        const FRONTEND_URL = 'https://core-pennypal.vercel.app';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        async function testBackendHealth() {
+            log('Testing backend health...', 'info');
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                log(`✅ Backend Health: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log(`❌ Backend Health Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testGoogleOAuth() {
+            const oauthURL = `${BACKEND_URL}/auth/google`;
+            log(`🔗 Google OAuth URL: ${oauthURL}`, 'info');
+            
+            // Test if URL is accessible
+            fetch(oauthURL, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => log('✅ OAuth URL is accessible', 'success'))
+                .catch(error => log(`❌ OAuth URL Error: ${error.message}`, 'error'));
+        }
+
+        function startOAuth() {
+            log('🚀 Starting OAuth flow...', 'info');
+            const oauthURL = `${BACKEND_URL}/auth/google`;
+            window.location.href = oauthURL;
+        }
+
+        function checkCurrentURL() {
+            const url = window.location.href;
+            const params = new URLSearchParams(window.location.search);
+            
+            log(`📍 Current URL: ${url}`, 'info');
+            log(`🔍 URL Parameters:`, 'info');
+            
+            for (const [key, value] of params.entries()) {
+                log(`  - ${key}: ${value}`, 'info');
+            }
+
+            // Check for OAuth tokens
+            const token = params.get('token');
+            const error = params.get('error');
+            
+            if (token) {
+                log(`✅ OAuth Token Found: ${token.substring(0, 20)}...`, 'success');
+                localStorage.setItem('pennypal_token', token);
+            }
+            
+            if (error) {
+                log(`❌ OAuth Error: ${error}`, 'error');
+            }
+
+            // Check localStorage
+            const storedToken = localStorage.getItem('pennypal_token');
+            const storedUser = localStorage.getItem('pennypal_user');
+            
+            if (storedToken) {
+                log(`💾 Stored Token: ${storedToken.substring(0, 20)}...`, 'info');
+            }
+            
+            if (storedUser) {
+                log(`👤 Stored User: ${storedUser}`, 'info');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('pennypal_token');
+            localStorage.removeItem('pennypal_user');
+            log('🗑️ Storage cleared', 'success');
+        }
+
+        // Auto-check URL on load
+        window.onload = function() {
+            checkCurrentURL();
+        };
+    </script>
+</body>
+</html>

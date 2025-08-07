@@ -29,7 +29,8 @@ const OAuthRedirect = () => {
         
         // Get user data
         try {
-          const response = await fetch('https://pennypal-backend.ddns.net/auth/me', {
+          const backendUrl = import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net';
+          const response = await fetch(`${backendUrl}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
