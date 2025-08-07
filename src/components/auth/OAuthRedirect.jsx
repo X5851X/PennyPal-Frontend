@@ -1,42 +1,35 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { authService } from '../../services/auth.js';
+import { useNavigate } from 'react-router-dom';
 
 const OAuthRedirect = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
-        // Get token from URL parameters
-        const token = searchParams.get('token');
-        const error = searchParams.get('error');
-
-        console.log('🔍 OAuth Redirect - Token:', token);
-        console.log('🔍 OAuth Redirect - Error:', error);
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const error = urlParams.get('error');
 
         if (error) {
-          console.error('❌ OAuth Error:', error);
           alert('Google authentication failed. Please try again.');
           navigate('/');
           return;
         }
 
         if (!token) {
-          console.error('❌ No token received');
           alert('Authentication failed - no token received.');
           navigate('/');
           return;
         }
 
-        // Store the token
+        // Store token
         localStorage.setItem('pennypal_token', token);
         
-        // Get user data using the token
+        // Get user data
         try {
-          // Make a request to get user data
-          const response = await fetch(`${import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net')}/auth/me`, {
+          const response = await fetch('https://pennypal-backend.ddns.net/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -47,26 +40,23 @@ const OAuthRedirect = () => {
             const userData = await response.json();
             if (userData.success && userData.user) {
               localStorage.setItem('pennypal_user', JSON.stringify(userData.user));
-              console.log('✅ User data stored:', userData.user);
             }
           }
         } catch (userError) {
-          console.error('❌ Error fetching user data:', userError);
-          // Continue anyway, we have the token
+          console.error('Error fetching user data:', userError);
         }
 
-        console.log('✅ OAuth successful, redirecting to dashboard');
         navigate('/dashboard');
 
       } catch (error) {
-        console.error('❌ OAuth callback error:', error);
+        console.error('OAuth callback error:', error);
         alert('Authentication failed. Please try again.');
         navigate('/');
       }
     };
 
     handleOAuthCallback();
-  }, [navigate, searchParams]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

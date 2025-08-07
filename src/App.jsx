@@ -53,6 +53,7 @@ function App() {
         
         {/* OAuth Redirect Route */}
         <Route path="/oauth-redirect" element={<OAuthRedirect />} />
+        <Route path="/oauth-redirect/*" element={<OAuthRedirect />} />
         
         {/* Protected Routes - perlu login */}
         <Route 
