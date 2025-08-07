@@ -12,7 +12,7 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: import.meta.env.DEV ? '' : API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },

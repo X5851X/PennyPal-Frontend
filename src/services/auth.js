@@ -10,11 +10,10 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-const API_URL = '/auth'; // Always use proxy path in development
 
 // Create axios instance with default config
 const authAPI = axios.create({
-  baseURL: API_URL,
+  baseURL: import.meta.env.DEV ? '/auth' : `${API_BASE_URL}/auth`,
   headers: {
     'Content-Type': 'application/json',
   },
