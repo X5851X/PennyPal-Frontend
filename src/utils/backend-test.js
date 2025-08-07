@@ -1,6 +1,6 @@
 // Backend connectivity test
 export const testBackend = async () => {
-  const baseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
+  const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
   
   console.log('🔍 Testing backend connectivity...');
   console.log('Base URL:', baseUrl);
@@ -43,7 +43,7 @@ export const testBackend = async () => {
 
 // Test specific signin endpoint
 export const testSignin = async (email = 'test@example.com', password = 'test123') => {
-  const baseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
+  const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
   
   try {
     console.log('🔍 Testing signin endpoint...');

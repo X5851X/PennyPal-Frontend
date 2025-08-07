@@ -2,7 +2,7 @@
 export const debugApi = {
   // Test basic connectivity
   async testConnection() {
-    const baseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
+    const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
     
     console.log('🔍 Testing API connection...');
     console.log('Base URL:', baseUrl);
@@ -21,7 +21,7 @@ export const debugApi = {
 
   // Test auth endpoint
   async testAuth() {
-    const baseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
+    const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net');
     
     try {
       const response = await fetch(`${baseUrl}/auth/test`);
@@ -38,7 +38,7 @@ export const debugApi = {
   getConfig() {
     return {
       isDev: import.meta.env.DEV,
-      baseUrl: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net'),
+      baseUrl: import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND || 'https://pennypal-backend.ddns.net'),
       backendUrl: import.meta.env.VITE_BACKEND,
       mode: import.meta.env.MODE
     };
